@@ -1,0 +1,705 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>가치관 자가진단 설문</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #F4F3EF;
+  --surface: #FFFFFF;
+  --surface2: #F9F8F5;
+  --text: #1C1C1A;
+  --text-muted: #6A6A66;
+  --text-hint: #A0A09C;
+  --border: rgba(0,0,0,0.08);
+  --border-md: rgba(0,0,0,0.14);
+  --purple: #5B4FD4;
+  --purple-light: #EDEEFE;
+  --purple-mid: #B8B2F0;
+  --purple-dark: #3D3499;
+  --teal: #0F7A63;
+  --teal-light: #E0F5EF;
+  --amber: #9A5C0A;
+  --amber-light: #FEF0DA;
+  --coral: #C04030;
+  --coral-light: #FDECEA;
+  --green: #3A7D20;
+  --green-light: #EAF5E0;
+  --r: 14px;
+  --r-sm: 8px;
+  --r-pill: 999px;
+}
+
+html { background: var(--bg); }
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding: 0 0 60px;
+}
+
+/* Header */
+.header {
+  background: var(--surface);
+  border-bottom: 0.5px solid var(--border-md);
+  padding: 16px 24px 14px;
+  text-align: center;
+}
+.header-label {
+  font-size: 11px; font-weight: 700; letter-spacing: .1em;
+  color: var(--purple); text-transform: uppercase; margin-bottom: 4px;
+}
+.header-title { font-size: 18px; font-weight: 700; color: var(--text); }
+.header-sub { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+/* Progress */
+.progress-outer {
+  background: var(--surface);
+  border-bottom: 0.5px solid var(--border);
+  padding: 10px 24px;
+  position: sticky; top: 0; z-index: 10;
+}
+.progress-info {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 6px;
+}
+.progress-text { font-size: 12px; color: var(--text-muted); }
+.progress-pct { font-size: 12px; font-weight: 700; color: var(--purple); }
+.progress-bar-bg { height: 4px; background: var(--border); border-radius: 2px; }
+.progress-bar-fill {
+  height: 4px; background: var(--purple);
+  border-radius: 2px; transition: width .4s ease;
+}
+
+/* Main */
+.main { max-width: 680px; margin: 0 auto; padding: 24px 16px; }
+
+/* Phase */
+.phase { display: none; }
+.phase.active { display: block; animation: up .35s ease; }
+@keyframes up { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+/* Intro */
+.intro-hero {
+  background: var(--purple-light);
+  border: 0.5px solid var(--purple-mid);
+  border-radius: var(--r);
+  padding: 24px 22px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+.intro-emoji { font-size: 40px; margin-bottom: 10px; }
+.intro-title { font-size: 20px; font-weight: 700; color: var(--purple-dark); margin-bottom: 8px; }
+.intro-desc { font-size: 14px; color: var(--purple-dark); line-height: 1.75; opacity: .85; }
+.intro-meta {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 16px;
+}
+.meta-card {
+  background: var(--surface);
+  border: 0.5px solid var(--border-md);
+  border-radius: var(--r-sm);
+  padding: 12px 8px; text-align: center;
+}
+.meta-icon { font-size: 18px; margin-bottom: 4px; }
+.meta-label { font-size: 11px; color: var(--text-muted); }
+.meta-value { font-size: 13px; font-weight: 700; color: var(--text); margin-top: 1px; }
+
+/* Name input */
+.name-wrap {
+  background: var(--surface);
+  border: 0.5px solid var(--border-md);
+  border-radius: var(--r);
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+.name-label { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.name-input {
+  width: 100%; border: 0.5px solid var(--border-md);
+  border-radius: var(--r-sm); padding: 10px 12px;
+  font-size: 14px; font-family: inherit; color: var(--text);
+  background: var(--bg); transition: border-color .15s;
+}
+.name-input:focus { outline: none; border-color: var(--purple); }
+.name-input::placeholder { color: var(--text-hint); }
+
+/* Question card */
+.q-card {
+  background: var(--surface);
+  border: 0.5px solid var(--border-md);
+  border-radius: var(--r);
+  padding: 20px 18px;
+  margin-bottom: 12px;
+}
+.q-num {
+  display: inline-block; font-size: 10px; font-weight: 700;
+  letter-spacing: .08em; color: var(--purple);
+  background: var(--purple-light);
+  padding: 3px 9px; border-radius: var(--r-pill);
+  margin-bottom: 10px;
+}
+.q-category {
+  font-size: 10px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; margin-bottom: 6px;
+}
+.q-text { font-size: 14px; font-weight: 500; color: var(--text); line-height: 1.65; margin-bottom: 14px; }
+.q-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; margin-top: -8px; line-height: 1.5; }
+
+/* Scale options */
+.scale-row {
+  display: flex; gap: 6px; justify-content: space-between;
+}
+.scale-labels {
+  display: flex; justify-content: space-between;
+  margin-top: 6px;
+}
+.scale-label { font-size: 10px; color: var(--text-hint); }
+.scale-btn {
+  flex: 1; height: 44px;
+  border: 1.5px solid var(--border-md);
+  border-radius: var(--r-sm);
+  background: var(--bg); cursor: pointer;
+  font-size: 13px; font-weight: 700; color: var(--text-muted);
+  font-family: inherit; transition: all .15s;
+  display: flex; align-items: center; justify-content: center;
+}
+.scale-btn:hover { border-color: var(--purple-mid); background: var(--purple-light); color: var(--purple); }
+.scale-btn.selected { border-color: var(--purple); background: var(--purple); color: #fff; }
+
+/* Multi-choice */
+.choice-list { display: flex; flex-direction: column; gap: 7px; }
+.choice-btn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px;
+  border: 1.5px solid var(--border-md);
+  border-radius: var(--r-sm);
+  background: var(--bg); cursor: pointer;
+  font-size: 13px; font-family: inherit; color: var(--text);
+  text-align: left; transition: all .15s;
+}
+.choice-btn:hover { border-color: var(--purple-mid); background: var(--purple-light); }
+.choice-btn.selected { border-color: var(--purple); background: var(--purple-light); color: var(--purple-dark); font-weight: 500; }
+.choice-dot {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 1.5px solid var(--border-md);
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.choice-btn.selected .choice-dot {
+  background: var(--purple); border-color: var(--purple);
+}
+.choice-dot::after {
+  content: ''; width: 7px; height: 7px;
+  border-radius: 50%; background: #fff; opacity: 0;
+  transition: opacity .15s;
+}
+.choice-btn.selected .choice-dot::after { opacity: 1; }
+
+/* Textarea */
+.free-input {
+  width: 100%; min-height: 70px; resize: vertical;
+  border: 1.5px solid var(--border-md);
+  border-radius: var(--r-sm); padding: 10px 12px;
+  font-size: 13px; font-family: inherit; color: var(--text);
+  background: var(--bg); transition: border-color .15s; line-height: 1.6;
+}
+.free-input:focus { outline: none; border-color: var(--purple); }
+.free-input::placeholder { color: var(--text-hint); }
+
+/* Section divider */
+.section-divider {
+  display: flex; align-items: center; gap: 12px; margin: 20px 0 14px;
+}
+.section-line { flex: 1; height: 0.5px; background: var(--border-md); }
+.section-tag {
+  font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  color: var(--text-muted); text-transform: uppercase; white-space: nowrap;
+}
+
+/* Nav buttons */
+.nav-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border-radius: var(--r-sm);
+  font-size: 14px; font-weight: 500; font-family: inherit;
+  cursor: pointer; border: 0.5px solid var(--border-md);
+  background: var(--surface); color: var(--text); transition: all .15s;
+}
+.btn:hover { background: var(--bg); }
+.btn-primary { background: var(--purple); color: #fff; border-color: var(--purple); }
+.btn-primary:hover { background: var(--purple-dark); border-color: var(--purple-dark); }
+.btn-primary:disabled { background: var(--purple-mid); border-color: var(--purple-mid); cursor: not-allowed; opacity: .7; }
+
+/* Result */
+.result-hero {
+  background: var(--purple-light); border: 0.5px solid var(--purple-mid);
+  border-radius: var(--r); padding: 22px 20px; text-align: center; margin-bottom: 16px;
+}
+.result-name { font-size: 13px; color: var(--purple); margin-bottom: 4px; }
+.result-title { font-size: 20px; font-weight: 700; color: var(--purple-dark); margin-bottom: 6px; }
+.result-type-badge {
+  display: inline-block; font-size: 13px; font-weight: 700;
+  padding: 6px 16px; border-radius: var(--r-pill);
+  background: var(--purple); color: #fff; margin-bottom: 10px;
+}
+.result-desc { font-size: 13px; color: var(--purple-dark); line-height: 1.75; opacity: .9; }
+
+.result-block {
+  background: var(--surface); border: 0.5px solid var(--border-md);
+  border-radius: var(--r); padding: 16px 18px; margin-bottom: 10px;
+}
+.block-title {
+  font-size: 11px; font-weight: 700; letter-spacing: .08em;
+  color: var(--text-hint); text-transform: uppercase; margin-bottom: 12px;
+}
+.value-pills { display: flex; flex-wrap: wrap; gap: 7px; }
+.value-pill {
+  font-size: 12px; font-weight: 700; padding: 5px 13px;
+  border-radius: var(--r-pill);
+}
+.pill-1 { background: var(--purple-light); color: var(--purple-dark); border: 1px solid var(--purple-mid); }
+.pill-2 { background: var(--teal-light); color: var(--teal); border: 1px solid #7FCFBF; }
+.pill-3 { background: var(--amber-light); color: var(--amber); border: 1px solid #F0C070; }
+.pill-4 { background: var(--green-light); color: var(--green); border: 1px solid #90CC70; }
+.pill-5 { background: var(--coral-light); color: var(--coral); border: 1px solid #F0A090; }
+
+.score-row { display: flex; flex-direction: column; gap: 8px; }
+.score-item { display: flex; align-items: center; gap: 10px; }
+.score-label { font-size: 13px; color: var(--text); width: 80px; flex-shrink: 0; }
+.score-bar-bg { flex: 1; height: 8px; background: var(--border); border-radius: 4px; }
+.score-bar-fill { height: 8px; border-radius: 4px; transition: width .6s ease; }
+.score-val { font-size: 12px; font-weight: 700; color: var(--text-muted); width: 28px; text-align: right; }
+
+.free-result { font-size: 13px; color: var(--text-muted); line-height: 1.8; padding: 10px 12px; background: var(--surface2); border-radius: var(--r-sm); border-left: 3px solid var(--purple-mid); }
+
+.reflect-item { font-size: 13px; color: var(--text-muted); line-height: 1.7; padding: 8px 0; border-bottom: 0.5px solid var(--border); }
+.reflect-item:last-child { border-bottom: none; }
+.reflect-q { font-weight: 700; color: var(--text); font-size: 12px; margin-bottom: 3px; }
+
+.print-row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.print-hint { font-size: 11px; color: var(--text-hint); margin-top: 8px; text-align: center; }
+
+@media print {
+  .progress-outer, .nav-row, .print-row { display: none !important; }
+  .header { position: static; }
+  .phase { display: block !important; }
+  #ph-intro, #ph-q { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-label">중학교 1학년 도덕 · 1차시</div>
+  <div class="header-title">나의 가치관 자가진단</div>
+  <div class="header-sub">솔직하게 답할수록 나를 더 잘 알 수 있어요</div>
+</div>
+
+<div class="progress-outer">
+  <div class="progress-info">
+    <span class="progress-text" id="prog-text">시작 전</span>
+    <span class="progress-pct" id="prog-pct">0%</span>
+  </div>
+  <div class="progress-bar-bg"><div class="progress-bar-fill" id="prog-fill" style="width:0%"></div></div>
+</div>
+
+<div class="main">
+
+  <!-- 인트로 -->
+  <div id="ph-intro" class="phase active">
+    <div class="intro-hero">
+      <div class="intro-emoji">🧭</div>
+      <div class="intro-title">나는 무엇을 중요하게 생각할까?</div>
+      <div class="intro-desc">이 설문은 내가 삶에서 중요하게 여기는 것들을 스스로 탐색하는 활동이에요.<br>정답은 없어요. 가장 솔직한 내 생각을 골라보세요.</div>
+    </div>
+    <div class="intro-meta">
+      <div class="meta-card">
+        <div class="meta-icon">📝</div>
+        <div class="meta-label">문항 수</div>
+        <div class="meta-value">15문항</div>
+      </div>
+      <div class="meta-card">
+        <div class="meta-icon">⏱️</div>
+        <div class="meta-label">소요 시간</div>
+        <div class="meta-value">약 10분</div>
+      </div>
+      <div class="meta-card">
+        <div class="meta-icon">🔒</div>
+        <div class="meta-label">결과</div>
+        <div class="meta-value">내 화면만</div>
+      </div>
+    </div>
+    <div class="name-wrap">
+      <div class="name-label">시작 전에 이름을 입력해요</div>
+      <input class="name-input" type="text" id="student-name" placeholder="이름을 입력하세요" maxlength="20">
+    </div>
+    <div class="nav-row">
+      <button class="btn btn-primary" onclick="startSurvey()">설문 시작하기 →</button>
+    </div>
+  </div>
+
+  <!-- 설문 -->
+  <div id="ph-q" class="phase">
+
+    <!-- 섹션 A: 가치 중요도 -->
+    <div class="section-divider">
+      <div class="section-line"></div>
+      <div class="section-tag">A. 가치 중요도</div>
+      <div class="section-line"></div>
+    </div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">각 가치가 나에게 얼마나 중요한지 1~5점으로 선택해요. (1=별로 중요하지 않음, 5=매우 중요함)</p>
+
+    <div class="q-card" id="q1">
+      <div class="q-num">Q1</div>
+      <div class="q-text">정직하게 사는 것 (거짓말하지 않고 솔직하게)</div>
+      <div class="scale-row" id="scale-q1"></div>
+      <div class="scale-labels"><span class="scale-label">별로 중요하지 않음</span><span class="scale-label">매우 중요함</span></div>
+    </div>
+
+    <div class="q-card" id="q2">
+      <div class="q-num">Q2</div>
+      <div class="q-text">다른 사람을 배려하고 돕는 것</div>
+      <div class="scale-row" id="scale-q2"></div>
+      <div class="scale-labels"><span class="scale-label">별로 중요하지 않음</span><span class="scale-label">매우 중요함</span></div>
+    </div>
+
+    <div class="q-card" id="q3">
+      <div class="q-num">Q3</div>
+      <div class="q-text">내가 원하는 것을 스스로 선택하는 자유</div>
+      <div class="scale-row" id="scale-q3"></div>
+      <div class="scale-labels"><span class="scale-label">별로 중요하지 않음</span><span class="scale-label">매우 중요함</span></div>
+    </div>
+
+    <div class="q-card" id="q4">
+      <div class="q-num">Q4</div>
+      <div class="q-text">열심히 노력해서 목표를 이루는 성취감</div>
+      <div class="scale-row" id="scale-q4"></div>
+      <div class="scale-labels"><span class="scale-label">별로 중요하지 않음</span><span class="scale-label">매우 중요함</span></div>
+    </div>
+
+    <div class="q-card" id="q5">
+      <div class="q-num">Q5</div>
+      <div class="q-text">가족, 친구들과 따뜻하게 함께하는 것</div>
+      <div class="scale-row" id="scale-q5"></div>
+      <div class="scale-labels"><span class="scale-label">별로 중요하지 않음</span><span class="scale-label">매우 중요함</span></div>
+    </div>
+
+    <div class="q-card" id="q6">
+      <div class="q-num">Q6</div>
+      <div class="q-text">공정하고 올바른 사회 (정의)</div>
+      <div class="scale-row" id="scale-q6"></div>
+      <div class="scale-labels"><span class="scale-label">별로 중요하지 않음</span><span class="scale-label">매우 중요함</span></div>
+    </div>
+
+    <div class="q-card" id="q7">
+      <div class="q-num">Q7</div>
+      <div class="q-text">새로운 것을 배우고 지식을 쌓는 것</div>
+      <div class="scale-row" id="scale-q7"></div>
+      <div class="scale-labels"><span class="scale-label">별로 중요하지 않음</span><span class="scale-label">매우 중요함</span></div>
+    </div>
+
+    <!-- 섹션 B: 상황 선택 -->
+    <div class="section-divider" style="margin-top:24px;">
+      <div class="section-line"></div>
+      <div class="section-tag">B. 나라면 어떻게 할까?</div>
+      <div class="section-line"></div>
+    </div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">상황을 읽고 나에게 가장 가까운 답을 하나 선택해요.</p>
+
+    <div class="q-card" id="q8">
+      <div class="q-num">Q8</div>
+      <div class="q-text">시험에서 모르는 문제가 나왔을 때, 나는 보통…</div>
+      <div class="choice-list" id="choice-q8">
+        <button class="choice-btn" onclick="selectChoice('q8',0,this)"><span class="choice-dot"></span>끝까지 스스로 생각해서 풀려고 노력한다</button>
+        <button class="choice-btn" onclick="selectChoice('q8',1,this)"><span class="choice-dot"></span>옆 친구의 답을 살짝 보기도 한다</button>
+        <button class="choice-btn" onclick="selectChoice('q8',2,this)"><span class="choice-dot"></span>일단 넘기고 나중에 돌아온다</button>
+        <button class="choice-btn" onclick="selectChoice('q8',3,this)"><span class="choice-dot"></span>빈칸으로 두고 솔직하게 포기한다</button>
+      </div>
+    </div>
+
+    <div class="q-card" id="q9">
+      <div class="q-num">Q9</div>
+      <div class="q-text">친한 친구가 나에게 비밀을 말해달라고 조르면…</div>
+      <div class="choice-list" id="choice-q9">
+        <button class="choice-btn" onclick="selectChoice('q9',0,this)"><span class="choice-dot"></span>절대 말하지 않는다. 약속은 지켜야 한다</button>
+        <button class="choice-btn" onclick="selectChoice('q9',1,this)"><span class="choice-dot"></span>친구가 너무 조르면 조금은 말할 수도 있다</button>
+        <button class="choice-btn" onclick="selectChoice('q9',2,this)"><span class="choice-dot"></span>비밀 당사자에게 먼저 허락을 구한다</button>
+        <button class="choice-btn" onclick="selectChoice('q9',3,this)"><span class="choice-dot"></span>상황에 따라 다르게 판단한다</button>
+      </div>
+    </div>
+
+    <div class="q-card" id="q10">
+      <div class="q-num">Q10</div>
+      <div class="q-text">조별 과제에서 내 의견과 다수 의견이 충돌할 때, 나는…</div>
+      <div class="choice-list" id="choice-q10">
+        <button class="choice-btn" onclick="selectChoice('q10',0,this)"><span class="choice-dot"></span>팀의 의견을 따른다. 함께가 더 중요하다</button>
+        <button class="choice-btn" onclick="selectChoice('q10',1,this)"><span class="choice-dot"></span>내 의견이 더 낫다면 강하게 주장한다</button>
+        <button class="choice-btn" onclick="selectChoice('q10',2,this)"><span class="choice-dot"></span>절충안을 찾아서 모두가 만족할 방법을 찾는다</button>
+        <button class="choice-btn" onclick="selectChoice('q10',3,this)"><span class="choice-dot"></span>마음속으로는 불만이지만 그냥 따른다</button>
+      </div>
+    </div>
+
+    <!-- 섹션 C: 가치관 성찰 -->
+    <div class="section-divider" style="margin-top:24px;">
+      <div class="section-line"></div>
+      <div class="section-tag">C. 나를 돌아보기</div>
+      <div class="section-line"></div>
+    </div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.6;">솔직하게 생각을 써보세요. 짧아도 괜찮아요.</p>
+
+    <div class="q-card" id="q11">
+      <div class="q-num">Q11</div>
+      <div class="q-text">내 삶에서 가장 중요한 것 한 가지를 고른다면?</div>
+      <div class="choice-list" id="choice-q11">
+        <button class="choice-btn" onclick="selectChoice('q11',0,this)"><span class="choice-dot"></span>가족과 친구 (사랑과 관계)</button>
+        <button class="choice-btn" onclick="selectChoice('q11',1,this)"><span class="choice-dot"></span>나 자신의 성장과 성공</button>
+        <button class="choice-btn" onclick="selectChoice('q11',2,this)"><span class="choice-dot"></span>올바르고 정직하게 사는 것</button>
+        <button class="choice-btn" onclick="selectChoice('q11',3,this)"><span class="choice-dot"></span>즐거움과 행복한 순간들</button>
+        <button class="choice-btn" onclick="selectChoice('q11',4,this)"><span class="choice-dot"></span>사회에 도움이 되는 삶</button>
+      </div>
+    </div>
+
+    <div class="q-card" id="q12">
+      <div class="q-num">Q12</div>
+      <div class="q-text">나에게 가장 영향을 준 사람 또는 경험은?</div>
+      <div class="choice-list" id="choice-q12">
+        <button class="choice-btn" onclick="selectChoice('q12',0,this)"><span class="choice-dot"></span>부모님 / 가족</button>
+        <button class="choice-btn" onclick="selectChoice('q12',1,this)"><span class="choice-dot"></span>친구</button>
+        <button class="choice-btn" onclick="selectChoice('q12',2,this)"><span class="choice-dot"></span>선생님 / 어른</button>
+        <button class="choice-btn" onclick="selectChoice('q12',3,this)"><span class="choice-dot"></span>책, 영화, 미디어</button>
+        <button class="choice-btn" onclick="selectChoice('q12',4,this)"><span class="choice-dot"></span>직접 겪은 힘든 경험</button>
+      </div>
+    </div>
+
+    <div class="q-card" id="q13">
+      <div class="q-num">Q13</div>
+      <div class="q-text">내가 어떤 사람으로 기억되고 싶은지 한 문장으로 써보세요.</div>
+      <textarea class="free-input" id="free-q13" placeholder="예) 항상 친구들에게 따뜻한 사람으로 기억되고 싶다" maxlength="200" oninput="updateProgress()"></textarea>
+    </div>
+
+    <div class="q-card" id="q14">
+      <div class="q-num">Q14</div>
+      <div class="q-text">최근에 "이건 옳지 않다"고 느꼈던 순간이 있었나요? 어떤 상황이었나요?</div>
+      <textarea class="free-input" id="free-q14" placeholder="간단하게 써보세요. (없었다면 '없었다'고 적어도 돼요)" maxlength="200" oninput="updateProgress()"></textarea>
+    </div>
+
+    <div class="q-card" id="q15">
+      <div class="q-num">Q15</div>
+      <div class="q-text">지금 나의 가치관 중 아직 확신이 없는 것, 더 고민해보고 싶은 것이 있나요?</div>
+      <textarea class="free-input" id="free-q15" placeholder="솔직하게 써봐요. 모르겠다는 것도 좋은 답이에요." maxlength="200" oninput="updateProgress()"></textarea>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-primary" id="btn-result" onclick="showResult()" disabled>결과 보기 →</button>
+    </div>
+  </div>
+
+  <!-- 결과 -->
+  <div id="ph-result" class="phase">
+
+    <div class="result-hero">
+      <div class="result-name" id="res-name"></div>
+      <div class="result-title">나의 가치관 진단 결과</div>
+      <div class="result-type-badge" id="res-type"></div>
+      <div class="result-desc" id="res-desc"></div>
+    </div>
+
+    <div class="result-block">
+      <div class="block-title">가치 중요도 점수</div>
+      <div class="score-row" id="res-scores"></div>
+    </div>
+
+    <div class="result-block">
+      <div class="block-title">나의 핵심 가치 TOP 3</div>
+      <div class="value-pills" id="res-top3"></div>
+    </div>
+
+    <div class="result-block">
+      <div class="block-title">내가 직접 쓴 성찰</div>
+      <div id="res-free"></div>
+    </div>
+
+    <div class="result-block">
+      <div class="block-title">다음 차시를 위한 생각 거리</div>
+      <div id="res-reflect"></div>
+    </div>
+
+    <div class="print-row">
+      <button class="btn" onclick="goBack()">← 다시 하기</button>
+      <button class="btn btn-primary" onclick="window.print()">결과 출력 / 저장</button>
+    </div>
+    <div class="print-hint">※ 출력하거나 스크린샷을 찍어 선생님께 제출하세요.</div>
+  </div>
+
+</div>
+
+<script>
+const VALUES_LABEL = ['정직','배려','자유','성취','관계','정의','지식'];
+const VALUE_COLORS = ['pill-1','pill-2','pill-3','pill-4','pill-5','pill-1','pill-2'];
+const SCORE_COLORS = ['#5B4FD4','#0F7A63','#9A5C0A','#3A7D20','#C04030','#5B4FD4','#0F7A63'];
+
+let answers = { scales: {}, choices: {}, frees: {} };
+
+function buildScales() {
+  for (let i = 1; i <= 7; i++) {
+    const row = document.getElementById('scale-q' + i);
+    row.innerHTML = '';
+    for (let v = 1; v <= 5; v++) {
+      const btn = document.createElement('button');
+      btn.className = 'scale-btn';
+      btn.textContent = v;
+      btn.setAttribute('aria-label', v + '점');
+      const qi = 'q' + i, val = v;
+      btn.onclick = function() {
+        answers.scales[qi] = val;
+        row.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        updateProgress();
+      };
+      row.appendChild(btn);
+    }
+  }
+}
+
+function selectChoice(qid, idx, el) {
+  const list = el.closest('.choice-list');
+  list.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  answers.choices[qid] = idx;
+  updateProgress();
+}
+
+function countAnswered() {
+  const scalesDone = Object.keys(answers.scales).length;
+  const choicesDone = Object.keys(answers.choices).length;
+  return scalesDone + choicesDone;
+}
+
+function updateProgress() {
+  const total = 7 + 5; // 7 scales + 5 choices
+  const done = countAnswered();
+  const pct = Math.round(done / total * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('prog-text').textContent = done + ' / ' + total + '개 완료';
+  document.getElementById('btn-result').disabled = done < total;
+}
+
+function startSurvey() {
+  buildScales();
+  document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+  document.getElementById('ph-q').classList.add('active');
+  updateProgress();
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function showResult() {
+  const name = document.getElementById('student-name').value || '학생';
+
+  // gather free texts
+  ['q13','q14','q15'].forEach(id => {
+    answers.frees[id] = document.getElementById('free-' + id).value;
+  });
+
+  // scores
+  const scaleScores = [];
+  for (let i = 1; i <= 7; i++) {
+    scaleScores.push(answers.scales['q' + i] || 3);
+  }
+
+  // top 3 values
+  const indexed = scaleScores.map((s, i) => ({i, s})).sort((a,b) => b.s - a.s);
+  const top3 = indexed.slice(0, 3);
+
+  // type classification
+  const relScore = (scaleScores[0] + scaleScores[1] + scaleScores[4]) / 3;
+  const selfScore = (scaleScores[2] + scaleScores[3] + scaleScores[6]) / 3;
+  const socialScore = (scaleScores[5] + scaleScores[1]) / 2;
+
+  let typeName, typeDesc;
+  if (relScore >= selfScore && relScore >= socialScore) {
+    typeName = '관계 중심형';
+    typeDesc = '사람과의 연결을 가장 소중히 여기는 유형이에요. 따뜻한 관계, 신뢰, 배려가 삶의 중심에 있어요. 가족과 친구를 위해 기꺼이 헌신하는 힘을 가지고 있어요.';
+  } else if (selfScore >= relScore && selfScore >= socialScore) {
+    typeName = '성장 추구형';
+    typeDesc = '자신의 발전과 목표 달성을 중요하게 생각하는 유형이에요. 배움에 대한 열정과 자유로운 선택을 통해 스스로를 계속 성장시키려 해요.';
+  } else {
+    typeName = '사회 지향형';
+    typeDesc = '공동체와 사회의 올바름을 중요하게 생각하는 유형이에요. 정의롭고 따뜻한 세상을 만드는 데 관심이 있고, 다른 사람들을 위해 행동하려는 마음이 있어요.';
+  }
+
+  // render
+  document.getElementById('res-name').textContent = name + '의 결과';
+  document.getElementById('res-type').textContent = typeName;
+  document.getElementById('res-desc').textContent = typeDesc;
+
+  // scores bar
+  const scoresEl = document.getElementById('res-scores');
+  scoresEl.innerHTML = '';
+  scaleScores.forEach((s, i) => {
+    const pct = (s / 5 * 100).toFixed(0);
+    scoresEl.innerHTML += `
+      <div class="score-item">
+        <div class="score-label">${VALUES_LABEL[i]}</div>
+        <div class="score-bar-bg"><div class="score-bar-fill" style="width:${pct}%;background:${SCORE_COLORS[i]}"></div></div>
+        <div class="score-val">${s}점</div>
+      </div>`;
+  });
+
+  // top3
+  const top3El = document.getElementById('res-top3');
+  top3El.innerHTML = top3.map((t, pos) =>
+    `<span class="value-pill ${VALUE_COLORS[t.i]}">${pos+1}위 ${VALUES_LABEL[t.i]} (${t.s}점)</span>`
+  ).join('');
+
+  // free
+  const freeEl = document.getElementById('res-free');
+  const freeQs = [
+    {id:'q13', q:'어떤 사람으로 기억되고 싶나요?'},
+    {id:'q14', q:'옳지 않다고 느꼈던 순간'},
+    {id:'q15', q:'아직 확신이 없는 가치관'}
+  ];
+  freeEl.innerHTML = freeQs.map(({id, q}) => {
+    const val = answers.frees[id] || '(응답 없음)';
+    return `<div class="reflect-item"><div class="reflect-q">${q}</div>${val}</div>`;
+  }).join('');
+
+  // reflect
+  const reflectEl = document.getElementById('res-reflect');
+  const reflects = [
+    `나의 TOP 1 가치는 <strong>${VALUES_LABEL[top3[0].i]}</strong>이에요. 이 가치를 실제 생활에서 어떻게 실천할 수 있을까요?`,
+    `${typeName}인 나는 어떤 상황에서 가장 나다운 선택을 하게 될까요?`,
+    `2차시에서 탐구할 가치 충돌 상황 — 나라면 어떤 기준으로 판단할까요?`
+  ];
+  reflectEl.innerHTML = reflects.map(r =>
+    `<div class="reflect-item">${r}</div>`
+  ).join('');
+
+  document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+  document.getElementById('ph-result').classList.add('active');
+  document.getElementById('prog-fill').style.width = '100%';
+  document.getElementById('prog-pct').textContent = '100%';
+  document.getElementById('prog-text').textContent = '완료!';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function goBack() {
+  answers = { scales: {}, choices: {}, frees: {} };
+  document.querySelectorAll('.scale-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.choice-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.free-input').forEach(t => t.value = '');
+  document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+  document.getElementById('ph-intro').classList.add('active');
+  document.getElementById('prog-fill').style.width = '0%';
+  document.getElementById('prog-pct').textContent = '0%';
+  document.getElementById('prog-text').textContent = '시작 전';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+</script>
+</body>
+</html>
