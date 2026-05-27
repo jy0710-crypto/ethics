@@ -1,0 +1,551 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>가치관 카드 게임</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --purple-light: #EEEDFE;
+    --purple-mid: #AFA9EC;
+    --purple: #534AB7;
+    --purple-dark: #3C3489;
+    --teal-light: #E1F5EE;
+    --teal: #0F6E56;
+    --teal-dark: #085041;
+    --amber-light: #FAEEDA;
+    --amber: #854F0B;
+    --amber-dark: #633806;
+    --coral-light: #FAECE7;
+    --coral: #993C1D;
+    --bg: #F7F6F2;
+    --surface: #FFFFFF;
+    --text: #1a1a18;
+    --text-muted: #6b6b67;
+    --text-hint: #9e9e9a;
+    --border: rgba(0,0,0,0.1);
+    --border-strong: rgba(0,0,0,0.18);
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-pill: 999px;
+  }
+
+  html { background: var(--bg); min-height: 100vh; }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* Header */
+  .app-header {
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .app-logo { font-size: 15px; font-weight: 700; color: var(--purple); }
+  .app-subtitle { font-size: 12px; color: var(--text-hint); margin-top: 1px; }
+
+  /* Progress */
+  .progress-wrap { display: flex; gap: 4px; }
+  .progress-dot { width: 32px; height: 4px; border-radius: 2px; background: var(--border); transition: background .3s; }
+  .progress-dot.done { background: var(--purple); }
+  .progress-dot.current { background: var(--purple-mid); }
+
+  /* Main */
+  .main { max-width: 720px; margin: 0 auto; padding: 28px 20px 60px; }
+
+  /* Phase */
+  .phase { display: none; animation: fadeIn .3s ease; }
+  .phase.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Section labels */
+  .label { font-size: 11px; font-weight: 700; color: var(--text-hint); letter-spacing: .08em; text-transform: uppercase; margin-bottom: 10px; }
+  .phase-title { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .phase-desc { font-size: 14px; color: var(--text-muted); line-height: 1.7; margin-bottom: 20px; }
+
+  /* Intro */
+  .intro-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .intro-steps { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+  .intro-step { display: flex; align-items: flex-start; gap: 12px; }
+  .step-badge {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--purple-light); color: var(--purple-dark);
+    font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .step-text { font-size: 14px; color: var(--text-muted); line-height: 1.6; padding-top: 4px; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 10px 20px; border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 500; font-family: inherit;
+    cursor: pointer; transition: all .15s; border: 0.5px solid var(--border-strong);
+    background: var(--surface); color: var(--text);
+    text-decoration: none;
+  }
+  .btn:hover { background: var(--bg); }
+  .btn-primary {
+    background: var(--purple); color: #fff;
+    border-color: var(--purple);
+  }
+  .btn-primary:hover { background: var(--purple-dark); border-color: var(--purple-dark); }
+  .btn-primary:disabled { background: var(--purple-mid); border-color: var(--purple-mid); cursor: not-allowed; }
+  .btn-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 20px; }
+  .btn-row.end { justify-content: flex-end; }
+
+  /* Card grid */
+  .sel-info { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
+  .sel-info span { font-weight: 700; color: var(--purple); }
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 8px; margin-bottom: 20px;
+  }
+  .vcard {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 8px 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color .15s, background .15s, transform .1s;
+    user-select: none;
+  }
+  .vcard:hover { border-color: var(--purple-mid); transform: translateY(-2px); }
+  .vcard.selected {
+    border-color: var(--purple);
+    background: var(--purple-light);
+  }
+  .vcard-emoji { font-size: 24px; margin-bottom: 6px; display: block; }
+  .vcard-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .vcard.selected .vcard-name { color: var(--purple-dark); }
+  .vcard-desc { font-size: 11px; color: var(--text-hint); line-height: 1.4; }
+  .vcard.selected .vcard-desc { color: var(--purple); }
+
+  /* Rank */
+  .rank-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+  .rank-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    transition: border-color .2s;
+  }
+  .rank-item.top { border-left: 3px solid var(--purple); border-radius: 0 var(--radius) var(--radius) 0; }
+  .rank-num {
+    font-size: 13px; font-weight: 700; color: var(--text-hint);
+    width: 22px; flex-shrink: 0; padding-top: 2px;
+  }
+  .rank-item.top .rank-num { color: var(--purple); }
+  .rank-body { flex: 1; }
+  .rank-name { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+  .rank-emoji { font-size: 16px; }
+  textarea.rank-reason {
+    width: 100%; min-height: 52px; resize: vertical;
+    border: 0.5px solid var(--border-strong); border-radius: var(--radius-sm);
+    padding: 8px 10px; font-size: 13px; font-family: inherit;
+    color: var(--text); background: var(--bg);
+    transition: border-color .15s;
+    line-height: 1.6;
+  }
+  textarea.rank-reason:focus { outline: none; border-color: var(--purple); }
+  textarea.rank-reason::placeholder { color: var(--text-hint); }
+  .rank-arrows { display: flex; flex-direction: column; gap: 3px; flex-shrink: 0; }
+  .arr-btn {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: var(--bg); border: 0.5px solid var(--border);
+    cursor: pointer; font-size: 13px; color: var(--text-muted);
+    display: flex; align-items: center; justify-content: center;
+    transition: background .1s;
+  }
+  .arr-btn:hover:not(:disabled) { background: var(--purple-light); color: var(--purple); border-color: var(--purple-mid); }
+  .arr-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+  /* Dilemma */
+  .dilemma-progress { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
+  .dilemma-progress strong { color: var(--purple); }
+  .dilemma-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 12px;
+  }
+  .dilemma-tag {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: var(--radius-pill);
+    background: var(--amber-light); color: var(--amber-dark);
+    margin-bottom: 10px; letter-spacing: .02em;
+  }
+  .dilemma-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+  .dilemma-desc { font-size: 13px; color: var(--text-muted); line-height: 1.7; margin-bottom: 14px; }
+  .choice-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .choice-btn {
+    padding: 12px 10px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--border);
+    background: var(--bg); color: var(--text);
+    font-size: 13px; font-weight: 500; font-family: inherit;
+    cursor: pointer; transition: all .15s; line-height: 1.5; text-align: center;
+  }
+  .choice-btn:hover { border-color: var(--purple-mid); background: var(--purple-light); }
+  .choice-btn.picked-a { border-color: var(--purple); background: var(--purple-light); color: var(--purple-dark); }
+  .choice-btn.picked-b { border-color: var(--teal); background: var(--teal-light); color: var(--teal-dark); }
+
+  /* Result */
+  .result-block {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin-bottom: 12px;
+  }
+  .result-block-title { font-size: 12px; font-weight: 700; color: var(--text-hint); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; }
+  .top3-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .top3-badge {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 14px; border-radius: var(--radius-pill);
+    font-size: 13px; font-weight: 700;
+  }
+  .top3-badge.rank1 { background: var(--purple-light); color: var(--purple-dark); border: 1px solid var(--purple-mid); }
+  .top3-badge.rank2 { background: var(--teal-light); color: var(--teal-dark); border: 1px solid #5DCAA5; }
+  .top3-badge.rank3 { background: var(--amber-light); color: var(--amber-dark); border: 1px solid #EF9F27; }
+  .reason-list { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+  .reason-item { font-size: 13px; color: var(--text-muted); line-height: 1.6; padding-left: 10px; border-left: 2px solid var(--purple-mid); }
+  .tendency-text { font-size: 14px; color: var(--text-muted); line-height: 1.8; }
+  .tendency-highlight { font-weight: 700; color: var(--purple); }
+  .all-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .all-tag {
+    font-size: 12px; padding: 4px 12px; border-radius: var(--radius-pill);
+    background: var(--bg); border: 0.5px solid var(--border-strong);
+    color: var(--text-muted); font-weight: 500;
+  }
+
+  /* Print hint */
+  .print-hint { font-size: 12px; color: var(--text-hint); text-align: center; margin-top: 24px; }
+
+  @media (max-width: 480px) {
+    .card-grid { grid-template-columns: repeat(3, 1fr); }
+    .choice-row { grid-template-columns: 1fr; }
+    .phase-title { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div>
+    <div class="app-logo">가치관 카드 게임</div>
+    <div class="app-subtitle">중학교 1학년 도덕 · 4차시</div>
+  </div>
+  <div class="progress-wrap" id="progress">
+    <div class="progress-dot"></div>
+    <div class="progress-dot"></div>
+    <div class="progress-dot"></div>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- 인트로 -->
+  <div id="ph-intro" class="phase active">
+    <div class="phase-title">나의 가치관을 찾아보자</div>
+    <div class="phase-desc">3단계로 내가 중요하게 생각하는 것이 무엇인지 탐색해요.<br>정답은 없어요. 솔직하게 선택해 보세요.</div>
+    <div class="intro-card">
+      <div class="label">게임 순서</div>
+      <div class="intro-steps">
+        <div class="intro-step">
+          <div class="step-badge">1</div>
+          <div class="step-text"><strong>가치 카드 고르기</strong> — 24장의 카드 중 나에게 중요한 것을 5개 이상 선택해요</div>
+        </div>
+        <div class="intro-step">
+          <div class="step-badge">2</div>
+          <div class="step-text"><strong>순위 정하기</strong> — 선택한 가치를 중요한 순서대로 정리하고 1~3위에 이유를 써요</div>
+        </div>
+        <div class="intro-step">
+          <div class="step-badge">3</div>
+          <div class="step-text"><strong>딜레마 선택</strong> — 두 가치가 충돌하는 상황에서 나라면 어떻게 할지 선택해요</div>
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="startGame()">게임 시작 →</button>
+  </div>
+
+  <!-- 1단계: 카드 고르기 -->
+  <div id="ph-pick" class="phase">
+    <div class="phase-title">1단계 — 가치 카드 고르기</div>
+    <div class="phase-desc">나에게 중요한 가치를 5개 이상 골라보세요.</div>
+    <div class="sel-info">현재 <span id="sel-n">0</span>개 선택됨 (최소 5개)</div>
+    <div class="card-grid" id="card-grid"></div>
+    <div class="btn-row end">
+      <button class="btn btn-primary" id="btn-next1" onclick="goRank()" disabled>다음 — 순위 정하기 →</button>
+    </div>
+  </div>
+
+  <!-- 2단계: 순위 -->
+  <div id="ph-rank" class="phase">
+    <div class="phase-title">2단계 — 순위 정하기</div>
+    <div class="phase-desc">선택한 가치를 중요한 순서대로 정렬하고, 1~3위에는 이유를 써보세요.</div>
+    <div class="rank-list" id="rank-list"></div>
+    <div class="btn-row end">
+      <button class="btn" onclick="goPhase('ph-pick')">← 돌아가기</button>
+      <button class="btn btn-primary" onclick="goDilemma()">다음 — 딜레마 →</button>
+    </div>
+  </div>
+
+  <!-- 3단계: 딜레마 -->
+  <div id="ph-dilemma" class="phase">
+    <div class="phase-title">3단계 — 가치 충돌 딜레마</div>
+    <div class="phase-desc">상황을 읽고 A 또는 B를 선택하세요. 정답은 없어요. 솔직하게 선택해 보세요.</div>
+    <div class="dilemma-progress"><strong id="d-count">0</strong> / 4개 선택됨</div>
+    <div id="dilemma-list"></div>
+    <div class="btn-row end">
+      <button class="btn" onclick="goPhase('ph-rank')">← 돌아가기</button>
+      <button class="btn btn-primary" onclick="goResult()">결과 보기 →</button>
+    </div>
+  </div>
+
+  <!-- 결과 -->
+  <div id="ph-result" class="phase">
+    <div class="phase-title">나의 가치관 결과</div>
+    <div class="phase-desc">지금까지 탐색한 결과예요. 5차시 선언문을 쓸 때 활용해 보세요.</div>
+
+    <div class="result-block">
+      <div class="result-block-title">나의 TOP 3 가치</div>
+      <div class="top3-row" id="result-top3"></div>
+      <div class="reason-list" id="result-reasons"></div>
+    </div>
+
+    <div class="result-block">
+      <div class="result-block-title">딜레마에서 나타난 성향</div>
+      <div class="tendency-text" id="result-tendency"></div>
+    </div>
+
+    <div class="result-block">
+      <div class="result-block-title">내가 고른 전체 가치</div>
+      <div class="all-tags" id="result-all"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn" onclick="restart()">↺ 다시 하기</button>
+      <button class="btn btn-primary" onclick="window.print()">결과 출력하기</button>
+    </div>
+    <div class="print-hint">※ 결과 화면을 캡처하거나 출력해서 선생님께 제출하세요.</div>
+  </div>
+
+</div>
+
+<script>
+const VALUES = [
+  {e:'💛',name:'사랑',desc:'가족과 친구를 아끼는 것'},
+  {e:'⚖️',name:'정의',desc:'공정하고 올바른 것'},
+  {e:'🌿',name:'자연',desc:'환경과 생명을 소중히'},
+  {e:'🔥',name:'용기',desc:'두려움을 이기는 힘'},
+  {e:'🤝',name:'공동체',desc:'함께하는 삶'},
+  {e:'🏆',name:'성취',desc:'목표를 이루는 기쁨'},
+  {e:'🛡️',name:'정직',desc:'거짓없이 솔직하게'},
+  {e:'✨',name:'창의',desc:'새로운 것을 만드는 것'},
+  {e:'🕊️',name:'자유',desc:'스스로 선택하는 삶'},
+  {e:'📚',name:'지식',desc:'배우고 이해하는 것'},
+  {e:'🎯',name:'책임',desc:'맡은 일을 다하는 것'},
+  {e:'😊',name:'행복',desc:'기쁘고 즐거운 삶'},
+  {e:'🌱',name:'성장',desc:'더 나은 내가 되는 것'},
+  {e:'☮️',name:'평화',desc:'갈등없는 조화로운 삶'},
+  {e:'👑',name:'명예',desc:'존경받는 사람이 되는 것'},
+  {e:'🫶',name:'배려',desc:'다른 사람을 돕는 것'},
+  {e:'⏰',name:'성실',desc:'꾸준히 노력하는 것'},
+  {e:'🔍',name:'진실',desc:'사실을 있는 그대로'},
+  {e:'💰',name:'풍요',desc:'물질적으로 여유있는 삶'},
+  {e:'❤️‍🔥',name:'열정',desc:'온 마음을 다하는 것'},
+  {e:'👫',name:'우정',desc:'진심 어린 친구 관계'},
+  {e:'🙏',name:'신앙',desc:'믿음과 영적인 가치'},
+  {e:'🔄',name:'균형',desc:'일과 삶의 조화'},
+  {e:'🧭',name:'리더십',desc:'이끌고 영향을 주는 것'}
+];
+
+const DILEMMAS = [
+  {tag:'정직 vs 배려', title:'친구의 발표',
+   desc:'친한 친구가 열심히 준비한 발표를 했는데, 솔직히 내용이 많이 부족했어요. 친구가 "어떠했어?"라고 물어봅니다.',
+   a:'솔직하게 부족한 점을 말해준다', b:'잘했다고 칭찬해서 기분을 지켜준다', aVal:'정직', bVal:'배려'},
+  {tag:'자유 vs 책임', title:'약속이 있는 날',
+   desc:'친구들과 약속한 날, 갑자기 더 재미있는 일이 생겼어요. 약속을 취소하면 친구들이 실망할 것 같습니다.',
+   a:'약속을 지키고 친구들과 함께한다', b:'더 중요하게 생각되는 새 일을 선택한다', aVal:'책임', bVal:'자유'},
+  {tag:'공동체 vs 성취', title:'조별 과제',
+   desc:'조별 과제에서 내 아이디어가 훨씬 좋은데, 다른 친구들이 원하는 방향이 달라요. 어떻게 할까요?',
+   a:'팀의 의견을 따르고 함께 진행한다', b:'내 아이디어를 강하게 주장해서 더 좋은 결과를 낸다', aVal:'공동체', bVal:'성취'},
+  {tag:'정의 vs 우정', title:'목격한 순간',
+   desc:'가장 친한 친구가 다른 친구의 물건을 몰래 가져가는 것을 봤어요. 선생님이 나에게 물어봤습니다.',
+   a:'사실대로 말한다', b:'친구를 보호하기 위해 모른다고 한다', aVal:'정의', bVal:'우정'}
+];
+
+let selected = new Set();
+let rankOrder = [];
+let reasonMap = {};
+let dilemmaChoices = {};
+
+function setProgress(step) {
+  const dots = document.querySelectorAll('.progress-dot');
+  dots.forEach((d, i) => {
+    d.classList.remove('done','current');
+    if (i < step - 1) d.classList.add('done');
+    else if (i === step - 1) d.classList.add('current');
+  });
+}
+
+function goPhase(id) {
+  document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function startGame() { renderCards(); goPhase('ph-pick'); setProgress(1); }
+
+function renderCards() {
+  const grid = document.getElementById('card-grid');
+  grid.innerHTML = '';
+  VALUES.forEach((v, i) => {
+    const d = document.createElement('div');
+    d.className = 'vcard' + (selected.has(i) ? ' selected' : '');
+    d.innerHTML = `<span class="vcard-emoji">${v.e}</span><div class="vcard-name">${v.name}</div><div class="vcard-desc">${v.desc}</div>`;
+    d.onclick = () => { selected.has(i) ? selected.delete(i) : selected.add(i); renderCards(); };
+    grid.appendChild(d);
+  });
+  document.getElementById('sel-n').textContent = selected.size;
+  document.getElementById('btn-next1').disabled = selected.size < 5;
+}
+
+function goRank() {
+  if (selected.size < 5) return;
+  if (rankOrder.length === 0) rankOrder = [...selected];
+  else {
+    const cur = new Set(rankOrder);
+    selected.forEach(i => { if (!cur.has(i)) rankOrder.push(i); });
+    rankOrder = rankOrder.filter(i => selected.has(i));
+  }
+  renderRank();
+  goPhase('ph-rank');
+  setProgress(2);
+}
+
+function renderRank() {
+  const list = document.getElementById('rank-list');
+  list.innerHTML = '';
+  rankOrder.forEach((vi, pos) => {
+    const v = VALUES[vi];
+    const isTop = pos < 3;
+    const item = document.createElement('div');
+    item.className = 'rank-item' + (isTop ? ' top' : '');
+    item.innerHTML = `
+      <div class="rank-num">${pos+1}</div>
+      <div class="rank-body">
+        <div class="rank-name"><span class="rank-emoji">${v.e}</span>${v.name}</div>
+        ${isTop ? `<textarea class="rank-reason" placeholder="이 가치가 중요한 이유를 써보세요..." oninput="reasonMap[${vi}]=this.value">${reasonMap[vi]||''}</textarea>` : ''}
+      </div>
+      <div class="rank-arrows">
+        <button class="arr-btn" onclick="moveRank(${pos},-1)" ${pos===0?'disabled':''}>↑</button>
+        <button class="arr-btn" onclick="moveRank(${pos},1)" ${pos===rankOrder.length-1?'disabled':''}>↓</button>
+      </div>`;
+    list.appendChild(item);
+  });
+}
+
+function moveRank(pos, dir) {
+  const np = pos + dir;
+  if (np < 0 || np >= rankOrder.length) return;
+  [rankOrder[pos], rankOrder[np]] = [rankOrder[np], rankOrder[pos]];
+  renderRank();
+}
+
+function goDilemma() {
+  renderDilemmas();
+  goPhase('ph-dilemma');
+  setProgress(3);
+}
+
+function renderDilemmas() {
+  const list = document.getElementById('dilemma-list');
+  list.innerHTML = '';
+  DILEMMAS.forEach((d, i) => {
+    const picked = dilemmaChoices[i];
+    const card = document.createElement('div');
+    card.className = 'dilemma-card';
+    card.innerHTML = `
+      <div class="dilemma-tag">${d.tag}</div>
+      <div class="dilemma-title">${d.title}</div>
+      <div class="dilemma-desc">${d.desc}</div>
+      <div class="choice-row">
+        <button class="choice-btn ${picked==='a'?'picked-a':''}" onclick="pickD(${i},'a')">${d.a}</button>
+        <button class="choice-btn ${picked==='b'?'picked-b':''}" onclick="pickD(${i},'b')">${d.b}</button>
+      </div>`;
+    list.appendChild(card);
+  });
+  document.getElementById('d-count').textContent = Object.keys(dilemmaChoices).length;
+}
+
+function pickD(i, c) { dilemmaChoices[i] = c; renderDilemmas(); }
+
+function goResult() {
+  const rankClasses = ['rank1','rank2','rank3'];
+  const top3html = rankOrder.slice(0,3).map((vi,pi) => {
+    const v = VALUES[vi];
+    return `<span class="top3-badge ${rankClasses[pi]}">${v.e} ${pi+1}위 ${v.name}</span>`;
+  }).join('');
+  document.getElementById('result-top3').innerHTML = top3html;
+
+  const reasonsHtml = rankOrder.slice(0,3).map((vi, pi) => {
+    const v = VALUES[vi];
+    const r = reasonMap[vi];
+    return r ? `<div class="reason-item"><strong>${pi+1}위 ${v.name}:</strong> ${r}</div>` : '';
+  }).filter(Boolean).join('');
+  document.getElementById('result-reasons').innerHTML = reasonsHtml || '<div style="font-size:13px;color:var(--text-hint);">이유가 입력되지 않았어요.</div>';
+
+  let aCount = 0, bCount = 0;
+  DILEMMAS.forEach((d, i) => {
+    const c = dilemmaChoices[i];
+    if (c === 'a') aCount++;
+    else if (c === 'b') bCount++;
+  });
+  let tendency = '';
+  if (aCount > bCount) tendency = `<span class="tendency-highlight">규범·관계 중심</span> 성향이 나타났어요. 딜레마 상황에서 책임·정직·공동체를 선택하는 경향이 있어요. 약속과 규칙을 중요하게 생각하는 편이에요.`;
+  else if (bCount > aCount) tendency = `<span class="tendency-highlight">자율·결과 중심</span> 성향이 나타났어요. 딜레마 상황에서 자유·성취·우정을 선택하는 경향이 있어요. 스스로의 판단과 개인의 선택을 중요하게 생각하는 편이에요.`;
+  else tendency = `<span class="tendency-highlight">균형·유연</span> 성향이 나타났어요. 딜레마 상황에서 어느 한쪽으로 치우치지 않고, 상황에 따라 유연하게 판단해요.`;
+  document.getElementById('result-tendency').innerHTML = tendency;
+
+  const allHtml = rankOrder.slice(3).map(vi => `<span class="all-tag">${VALUES[vi].e} ${VALUES[vi].name}</span>`).join('');
+  document.getElementById('result-all').innerHTML = allHtml || '<span style="font-size:13px;color:var(--text-hint);">TOP 3 외 선택 없음</span>';
+
+  goPhase('ph-result');
+  setProgress(3);
+  document.querySelectorAll('.progress-dot').forEach(d => d.classList.add('done'));
+}
+
+function restart() {
+  selected = new Set(); rankOrder = []; reasonMap = {}; dilemmaChoices = {};
+  setProgress(0);
+  goPhase('ph-intro');
+}
+</script>
+</body>
+</html>
