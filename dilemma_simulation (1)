@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>가치 딜레마 시뮬레이션</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #F4F3EF;
+  --surface: #FFFFFF;
+  --surface2: #F9F8F5;
+  --text: #1C1C1A;
+  --muted: #6A6A66;
+  --hint: #A0A09C;
+  --border: rgba(0,0,0,0.08);
+  --border-md: rgba(0,0,0,0.14);
+  --blue: #1A3A5C;
+  --blue-light: #EEF4FB;
+  --blue-mid: #2E6DA4;
+  --red: #8B3A20;
+  --red-light: #FBF0EE;
+  --purple: #4A3BB0;
+  --purple-light: #EEEDFE;
+  --green: #1A5C3A;
+  --green-light: #EEF8F2;
+  --r: 12px; --r-sm: 8px; --r-pill: 999px;
+}
+html { background: var(--bg); }
+body { font-family: 'Noto Sans KR', sans-serif; color: var(--text); min-height: 100vh; padding-bottom: 60px; }
+
+.header {
+  background: var(--blue); color: #fff;
+  padding: 16px 24px 14px; text-align: center;
+  position: sticky; top: 0; z-index: 20;
+}
+.header-label { font-size: 11px; font-weight: 700; letter-spacing: .1em; opacity: .7; margin-bottom: 3px; }
+.header-title { font-size: 17px; font-weight: 700; }
+
+.progress-bar-outer {
+  background: var(--surface); border-bottom: 0.5px solid var(--border-md);
+  padding: 8px 24px; position: sticky; top: 56px; z-index: 19;
+}
+.prog-info { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+.prog-pct { font-weight: 700; color: var(--blue); }
+.prog-bg { height: 4px; background: var(--border); border-radius: 2px; }
+.prog-fill { height: 4px; background: var(--blue); border-radius: 2px; transition: width .4s ease; }
+
+.main { max-width: 700px; margin: 0 auto; padding: 24px 16px; }
+
+.phase { display: none; }
+.phase.active { display: block; animation: up .3s ease; }
+@keyframes up { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+
+/* Intro */
+.intro-card {
+  background: var(--blue); color: #fff;
+  border-radius: var(--r); padding: 28px 24px; text-align: center; margin-bottom: 16px;
+}
+.intro-emoji { font-size: 42px; margin-bottom: 12px; }
+.intro-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+.intro-desc { font-size: 14px; line-height: 1.75; opacity: .85; }
+.step-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.step-card {
+  background: var(--surface); border: 0.5px solid var(--border-md);
+  border-radius: var(--r-sm); padding: 14px 12px; text-align: center;
+}
+.step-icon { font-size: 22px; margin-bottom: 6px; }
+.step-text { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.name-box {
+  background: var(--surface); border: 0.5px solid var(--border-md);
+  border-radius: var(--r); padding: 16px 18px; margin-bottom: 16px;
+}
+.name-label { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+input.name-input {
+  width: 100%; border: 0.5px solid var(--border-md); border-radius: var(--r-sm);
+  padding: 10px 12px; font-size: 14px; font-family: inherit; color: var(--text);
+  background: var(--bg);
+}
+input.name-input:focus { outline: none; border-color: var(--blue); }
+
+/* Nav */
+.nav-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border-radius: var(--r-sm);
+  font-size: 14px; font-weight: 500; font-family: inherit;
+  cursor: pointer; border: 0.5px solid var(--border-md);
+  background: var(--surface); color: var(--text); transition: all .15s;
+}
+.btn:hover { background: var(--bg); }
+.btn-primary { background: var(--blue); color: #fff; border-color: var(--blue); }
+.btn-primary:hover { background: #122C47; border-color: #122C47; }
+.btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+
+/* Dilemma card */
+.d-header { margin-bottom: 16px; }
+.d-step { font-size: 12px; color: var(--hint); margin-bottom: 4px; }
+.d-title { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.d-no { font-size: 20px; font-weight: 700; color: var(--blue); }
+.d-tag {
+  font-size: 11px; font-weight: 700; letter-spacing: .06em;
+  padding: 4px 10px; border-radius: var(--r-pill);
+  background: var(--blue-light); color: var(--blue);
+}
+.d-name { font-size: 18px; font-weight: 700; color: var(--text); }
+
+.situation-box {
+  background: var(--surface); border: 0.5px solid var(--border-md);
+  border-top: 3px solid var(--blue-mid);
+  border-radius: 0 0 var(--r) var(--r);
+  padding: 16px 18px; margin-bottom: 16px;
+}
+.sit-label { font-size: 11px; font-weight: 700; letter-spacing: .07em; color: var(--hint); margin-bottom: 8px; }
+.sit-text { font-size: 14px; color: var(--text); line-height: 1.8; }
+
+.choice-section { margin-bottom: 16px; }
+.choice-label { font-size: 13px; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
+.choice-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.choice-btn {
+  padding: 14px 12px; border-radius: var(--r);
+  border: 2px solid var(--border-md);
+  background: var(--surface); cursor: pointer;
+  font-size: 13px; font-weight: 500; font-family: inherit;
+  color: var(--text); text-align: center; line-height: 1.5;
+  transition: all .15s;
+}
+.choice-btn:hover { border-color: var(--blue-mid); background: var(--blue-light); }
+.choice-btn.sel-a { border-color: var(--blue); background: var(--blue-light); color: var(--blue); }
+.choice-btn.sel-b { border-color: var(--red); background: var(--red-light); color: var(--red); }
+.choice-btn.sel-c { border-color: var(--purple); background: var(--purple-light); color: var(--purple); }
+
+.reason-section {
+  background: var(--surface); border: 0.5px solid var(--border-md);
+  border-radius: var(--r); overflow: hidden; margin-bottom: 16px;
+}
+.reason-header {
+  background: var(--surface2); padding: 10px 14px;
+  font-size: 12px; font-weight: 700; color: var(--muted);
+  border-bottom: 0.5px solid var(--border);
+}
+.reason-body { padding: 12px 14px; }
+textarea.reason-input {
+  width: 100%; min-height: 80px; resize: vertical;
+  border: 0.5px solid var(--border-md); border-radius: var(--r-sm);
+  padding: 10px 12px; font-size: 13px; font-family: inherit;
+  color: var(--text); background: var(--bg); line-height: 1.7;
+  margin-bottom: 10px;
+}
+textarea.reason-input:focus { outline: none; border-color: var(--blue); }
+textarea.reason-input::placeholder { color: var(--hint); }
+
+/* Difficulty */
+.diff-section { margin-bottom: 16px; }
+.diff-label { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
+.diff-row { display: flex; gap: 6px; }
+.diff-btn {
+  flex: 1; padding: 8px 4px; border-radius: var(--r-sm);
+  border: 1.5px solid var(--border-md); background: var(--bg);
+  cursor: pointer; font-size: 12px; font-family: inherit; color: var(--muted);
+  text-align: center; transition: all .15s;
+}
+.diff-btn:hover { border-color: var(--blue-mid); }
+.diff-btn.sel { border-color: var(--blue); background: var(--blue-light); color: var(--blue); font-weight: 700; }
+
+/* Result */
+.result-hero {
+  background: var(--blue); color: #fff;
+  border-radius: var(--r); padding: 24px 20px; text-align: center; margin-bottom: 16px;
+}
+.result-name { font-size: 13px; opacity: .7; margin-bottom: 4px; }
+.result-title { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+.result-sub { font-size: 13px; line-height: 1.7; opacity: .85; }
+
+.result-block {
+  background: var(--surface); border: 0.5px solid var(--border-md);
+  border-radius: var(--r); padding: 16px 18px; margin-bottom: 10px;
+}
+.rb-title { font-size: 11px; font-weight: 700; letter-spacing: .07em; color: var(--hint); margin-bottom: 12px; }
+.tendency-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.t-badge {
+  font-size: 12px; font-weight: 700; padding: 5px 13px;
+  border-radius: var(--r-pill);
+}
+.t-blue { background: var(--blue-light); color: var(--blue); border: 1px solid #7FAFD0; }
+.t-red { background: var(--red-light); color: var(--red); border: 1px solid #D07060; }
+.t-purple { background: var(--purple-light); color: var(--purple); border: 1px solid #A098D8; }
+.t-green { background: var(--green-light); color: var(--green); border: 1px solid #70B090; }
+
+.dilemma-summary { display: flex; flex-direction: column; gap: 8px; }
+.ds-item {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 10px 12px; border-radius: var(--r-sm);
+  background: var(--surface2); border: 0.5px solid var(--border);
+}
+.ds-no { font-size: 11px; font-weight: 700; color: var(--blue); flex-shrink: 0; padding-top: 2px; }
+.ds-body { flex: 1; }
+.ds-tag { font-size: 11px; color: var(--hint); margin-bottom: 2px; }
+.ds-choice { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+.ds-reason { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.tendency-desc { font-size: 13px; color: var(--muted); line-height: 1.8; }
+.print-row { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.print-hint { font-size: 11px; color: var(--hint); margin-top: 8px; text-align: center; }
+
+@media (max-width: 480px) {
+  .choice-row { grid-template-columns: 1fr; }
+  .step-cards { grid-template-columns: 1fr; }
+  .diff-row { flex-wrap: wrap; }
+}
+@media print {
+  .header, .progress-bar-outer, .nav-row, .print-row { display: none !important; }
+  .phase { display: block !important; }
+  #ph-intro, #ph-dilemma { display: none !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-label">중학교 1학년 도덕 · 2차시</div>
+  <div class="header-title">가치 딜레마 시뮬레이션</div>
+</div>
+<div class="progress-bar-outer">
+  <div class="prog-info">
+    <span id="prog-text">시작 전</span>
+    <span class="prog-pct" id="prog-pct">0%</span>
+  </div>
+  <div class="prog-bg"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+</div>
+
+<div class="main">
+
+<!-- 인트로 -->
+<div id="ph-intro" class="phase active">
+  <div class="intro-card">
+    <div class="intro-emoji">⚖️</div>
+    <div class="intro-title">두 가치가 충돌할 때, 나는?</div>
+    <div class="intro-desc">정직과 배려, 자유와 책임… 때로는 두 가지 좋은 가치가 서로 충돌해요.<br>각 상황에서 내가 어떤 선택을 할지 탐색해봐요.</div>
+  </div>
+  <div class="step-cards">
+    <div class="step-card"><div class="step-icon">📖</div><div class="step-text">상황을 읽고 A 또는 B 선택하기</div></div>
+    <div class="step-card"><div class="step-icon">✏️</div><div class="step-text">선택 이유를 솔직하게 쓰기</div></div>
+    <div class="step-card"><div class="step-icon">🔁</div><div class="step-text">5가지 딜레마 모두 탐색하기</div></div>
+    <div class="step-card"><div class="step-icon">🌱</div><div class="step-text">내 가치관 성향 결과 확인하기</div></div>
+  </div>
+  <div class="name-box">
+    <div class="name-label">이름을 입력해요</div>
+    <input class="name-input" type="text" id="student-name" placeholder="이름을 입력하세요" maxlength="20">
+  </div>
+  <div class="nav-row"><button class="btn btn-primary" onclick="startGame()">시작하기 →</button></div>
+</div>
+
+<!-- 딜레마 -->
+<div id="ph-dilemma" class="phase">
+  <div class="d-header">
+    <div class="d-step" id="d-step"></div>
+    <div class="d-title">
+      <span class="d-no" id="d-no"></span>
+      <span class="d-tag" id="d-tag"></span>
+      <span class="d-name" id="d-name"></span>
+    </div>
+  </div>
+
+  <div class="situation-box">
+    <div class="sit-label">📋 상황</div>
+    <div class="sit-text" id="d-situation"></div>
+  </div>
+
+  <div class="choice-section">
+    <div class="choice-label">💬 만약 나라면?</div>
+    <div class="choice-row">
+      <button class="choice-btn" id="btn-a" onclick="pickChoice('a')"><span id="label-a"></span></button>
+      <button class="choice-btn" id="btn-b" onclick="pickChoice('b')"><span id="label-b"></span></button>
+    </div>
+    <div style="margin-top:8px;">
+      <button class="choice-btn" id="btn-c" style="width:100%;" onclick="pickChoice('c')">🤔 선택하기 어렵다 (두 가지 모두 이해된다)</button>
+    </div>
+  </div>
+
+  <div class="reason-section">
+    <div class="reason-header">✏️ 내가 이렇게 선택한 이유</div>
+    <div class="reason-body">
+      <textarea class="reason-input" id="reason-main" placeholder="왜 이 선택을 했나요? 구체적인 상황이나 감정도 써보세요." rows="3" oninput="onReasonInput()"></textarea>
+      <div class="reason-header" style="margin: 0 -14px; padding: 8px 14px;">💭 반대 선택의 어떤 점이 이해되나요?</div>
+      <textarea class="reason-input" id="reason-other" placeholder="반대 선택을 한 사람의 마음도 생각해보세요." rows="2" style="margin-top:10px;margin-bottom:0;"></textarea>
+    </div>
+  </div>
+
+  <div class="diff-section">
+    <div class="diff-label">이 딜레마는 얼마나 어려웠나요?</div>
+    <div class="diff-row">
+      <button class="diff-btn" onclick="pickDiff(1)">😌 쉬웠어요</button>
+      <button class="diff-btn" onclick="pickDiff(2)">🤔 약간 고민됐어요</button>
+      <button class="diff-btn" onclick="pickDiff(3)">😤 많이 어려웠어요</button>
+      <button class="diff-btn" onclick="pickDiff(4)">😵 정말 힘들었어요</button>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn" id="btn-prev" onclick="prevD()">← 이전</button>
+    <button class="btn btn-primary" id="btn-next" onclick="nextD()" disabled>다음 →</button>
+  </div>
+</div>
+
+<!-- 결과 -->
+<div id="ph-result" class="phase">
+  <div class="result-hero">
+    <div class="result-name" id="res-name"></div>
+    <div class="result-title">나의 가치 성향 분석</div>
+    <div class="result-sub" id="res-sub"></div>
+  </div>
+
+  <div class="result-block">
+    <div class="rb-title">선택에서 나타난 가치 성향</div>
+    <div class="tendency-row" id="res-tendency"></div>
+    <div class="tendency-desc" id="res-tendency-desc"></div>
+  </div>
+
+  <div class="result-block">
+    <div class="rb-title">딜레마별 나의 선택 요약</div>
+    <div class="dilemma-summary" id="res-summary"></div>
+  </div>
+
+  <div class="result-block">
+    <div class="rb-title">다음 차시를 위한 생각거리</div>
+    <div class="tendency-desc" id="res-reflect"></div>
+  </div>
+
+  <div class="print-row">
+    <button class="btn" onclick="restart()">↺ 다시 하기</button>
+    <button class="btn btn-primary" onclick="window.print()">결과 출력 / 저장</button>
+  </div>
+  <div class="print-hint">※ 결과를 캡처하거나 출력해서 선생님께 제출하세요.</div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+const DILEMMAS = [
+  { tag:"정직 vs 배려", name:"친구의 발표",
+    situation:"친한 친구가 열심히 준비한 발표를 했어요. 그런데 솔직히 내용이 많이 부족하고 말도 자주 막혔어요. 발표가 끝난 후 친구가 나에게 다가와 \"어땠어? 잘했지?\"라고 물어봅니다. 친구는 기대에 차 있고, 이번 발표가 중요한 수행평가예요.",
+    a:"A. 솔직하게 부족한 점을 말해준다", b:"B. 칭찬해서 친구의 기분을 지켜준다",
+    aVal:"정직", bVal:"배려" },
+  { tag:"책임 vs 자유", name:"약속이 있는 날",
+    situation:"일주일 전에 친구들과 방과 후 도서관에서 함께 공부하기로 약속했어요. 그런데 당일, 좋아하는 아이돌 그룹의 갑작스러운 온라인 팬 사인회가 같은 시간에 생겼어요. 친구들에게 연락하니 \"우리가 이미 자리 잡고 기다리고 있어\"라는 답장이 왔어요.",
+    a:"A. 약속을 지키고 친구들과 함께 공부한다", b:"B. 팬 사인회를 선택한다",
+    aVal:"책임", bVal:"자유" },
+  { tag:"공동체 vs 성취", name:"조별 발표 준비",
+    situation:"중요한 조별 발표 준비 중, 내가 혼자 밤새워 만든 자료가 훨씬 완성도가 높아요. 하지만 조원들은 함께 만든 자료(완성도가 낮음)를 발표하자고 해요. 내 자료를 쓰면 더 좋은 점수를 받을 수 있지만, 조원들은 섭섭해할 것 같아요.",
+    a:"A. 함께 만든 자료로 발표한다", b:"B. 내 자료로 발표하자고 강하게 주장한다",
+    aVal:"공동체", bVal:"성취" },
+  { tag:"정의 vs 우정", name:"목격한 순간",
+    situation:"쉬는 시간에 가장 친한 친구가 다른 반 친구의 필통에서 돈을 몰래 꺼내는 것을 봤어요. 잠시 후 선생님이 교실에 들어와 \"누가 봤는지 솔직하게 말해줬으면 좋겠다\"고 하셨어요. 친구는 눈빛으로 제발 모른다고 해달라고 애원하고 있어요.",
+    a:"A. 사실대로 선생님께 말씀드린다", b:"B. 친구를 위해 모른다고 한다",
+    aVal:"정의", bVal:"우정" },
+  { tag:"용기 vs 평화", name:"괴롭힘을 목격했을 때",
+    situation:"점심시간에 한 친구가 같은 반 아이들에게 지속적으로 놀림받는 것을 목격했어요. 나도 예전에 비슷한 경험이 있어서 그 친구가 얼마나 힘들지 알아요. 하지만 나서면 내가 다음 대상이 될 수도 있고, 이미 많은 아이들이 보고도 모른 척하고 있어요.",
+    a:"A. 직접 나서서 \"그만해\"라고 말한다", b:"B. 선생님께 조용히 알린다",
+    aVal:"용기", bVal:"배려" },
+];
+
+const VALUE_TENDENCIES = {
+  정직:{label:"정직 중시", color:"t-blue", desc:"사실을 있는 그대로 말하는 것을 중요하게 생각해요."},
+  배려:{label:"배려 중시", color:"t-green", desc:"다른 사람의 감정과 상황을 먼저 헤아려요."},
+  책임:{label:"책임 중시", color:"t-blue", desc:"약속과 의무를 중요하게 생각해요."},
+  자유:{label:"자유 중시", color:"t-purple", desc:"자신의 선택과 자율성을 소중히 여겨요."},
+  공동체:{label:"공동체 중시", color:"t-green", desc:"함께하는 것의 가치를 크게 생각해요."},
+  성취:{label:"성취 중시", color:"t-purple", desc:"목표와 결과를 중요하게 생각해요."},
+  정의:{label:"정의 중시", color:"t-blue", desc:"옳고 그름을 판단하는 기준이 뚜렷해요."},
+  우정:{label:"우정 중시", color:"t-green", desc:"관계와 신뢰를 소중하게 여겨요."},
+  용기:{label:"용기 중시", color:"t-red", desc:"어려운 상황에서도 옳은 행동을 선택해요."},
+};
+
+let cur = 0;
+let answers = []; // {choice, reasonMain, reasonOther, difficulty}
+let studentName = "";
+
+function goPhase(id) {
+  document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function updateProgress() {
+  const done = answers.filter(a => a && a.choice).length;
+  const total = DILEMMAS.length;
+  const pct = Math.round(done / total * 100);
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-pct').textContent = pct + '%';
+  document.getElementById('prog-text').textContent = `${done} / ${total}개 완료`;
+}
+
+function startGame() {
+  studentName = document.getElementById('student-name').value || '학생';
+  answers = DILEMMAS.map(() => ({ choice: null, reasonMain: '', reasonOther: '', difficulty: null }));
+  cur = 0;
+  renderDilemma();
+  goPhase('ph-dilemma');
+  updateProgress();
+}
+
+function renderDilemma() {
+  const d = DILEMMAS[cur];
+  const ans = answers[cur];
+  document.getElementById('d-step').textContent = `${cur+1} / ${DILEMMAS.length}`;
+  document.getElementById('d-no').textContent = `딜레마 ${cur+1}`;
+  document.getElementById('d-tag').textContent = d.tag;
+  document.getElementById('d-name').textContent = d.name;
+  document.getElementById('d-situation').textContent = d.situation;
+  document.getElementById('label-a').textContent = d.a;
+  document.getElementById('label-b').textContent = d.b;
+
+  // restore choice
+  ['btn-a','btn-b','btn-c'].forEach(id => {
+    document.getElementById(id).className = 'choice-btn';
+    if (id === 'btn-c') document.getElementById(id).style.width = '100%';
+  });
+  if (ans.choice === 'a') document.getElementById('btn-a').classList.add('sel-a');
+  else if (ans.choice === 'b') document.getElementById('btn-b').classList.add('sel-b');
+  else if (ans.choice === 'c') document.getElementById('btn-c').classList.add('sel-c');
+
+  document.getElementById('reason-main').value = ans.reasonMain;
+  document.getElementById('reason-other').value = ans.reasonOther;
+
+  document.querySelectorAll('.diff-btn').forEach((b, i) => {
+    b.classList.toggle('sel', ans.difficulty === i+1);
+  });
+
+  document.getElementById('btn-prev').disabled = cur === 0;
+  checkNext();
+}
+
+function pickChoice(c) {
+  answers[cur].choice = c;
+  ['btn-a','btn-b','btn-c'].forEach(id => {
+    document.getElementById(id).className = 'choice-btn';
+    if (id === 'btn-c') document.getElementById(id).style.width = '100%';
+  });
+  if (c === 'a') document.getElementById('btn-a').classList.add('sel-a');
+  else if (c === 'b') document.getElementById('btn-b').classList.add('sel-b');
+  else document.getElementById('btn-c').classList.add('sel-c');
+  checkNext();
+  updateProgress();
+}
+
+function pickDiff(n) {
+  answers[cur].difficulty = n;
+  document.querySelectorAll('.diff-btn').forEach((b, i) => b.classList.toggle('sel', i+1===n));
+}
+
+function onReasonInput() {
+  answers[cur].reasonMain = document.getElementById('reason-main').value;
+  answers[cur].reasonOther = document.getElementById('reason-other').value;
+}
+
+function checkNext() {
+  const ans = answers[cur];
+  const isLast = cur === DILEMMAS.length - 1;
+  const btn = document.getElementById('btn-next');
+  btn.disabled = !ans.choice;
+  btn.textContent = isLast ? '결과 보기 →' : '다음 →';
+}
+
+function nextD() {
+  answers[cur].reasonMain = document.getElementById('reason-main').value;
+  answers[cur].reasonOther = document.getElementById('reason-other').value;
+  if (cur < DILEMMAS.length - 1) { cur++; renderDilemma(); }
+  else showResult();
+}
+
+function prevD() {
+  answers[cur].reasonMain = document.getElementById('reason-main').value;
+  answers[cur].reasonOther = document.getElementById('reason-other').value;
+  if (cur > 0) { cur--; renderDilemma(); }
+}
+
+function showResult() {
+  // collect values chosen
+  const valueCounts = {};
+  answers.forEach((ans, i) => {
+    const d = DILEMMAS[i];
+    let val = null;
+    if (ans.choice === 'a') val = d.aVal;
+    else if (ans.choice === 'b') val = d.bVal;
+    if (val) valueCounts[val] = (valueCounts[val]||0) + 1;
+  });
+
+  const sorted = Object.entries(valueCounts).sort((a,b)=>b[1]-a[1]);
+  const topValues = sorted.slice(0, 3).map(([v]) => v);
+
+  // tendency badges
+  const tendencyEl = document.getElementById('res-tendency');
+  tendencyEl.innerHTML = topValues.map(v => {
+    const t = VALUE_TENDENCIES[v] || {label:v, color:'t-blue'};
+    return `<span class="t-badge ${t.color}">${t.label}</span>`;
+  }).join('');
+
+  // tendency desc
+  const descEl = document.getElementById('res-tendency-desc');
+  descEl.innerHTML = topValues.map(v => {
+    const t = VALUE_TENDENCIES[v];
+    return t ? `<b>${t.label}:</b> ${t.desc}` : '';
+  }).filter(Boolean).join('<br>');
+
+  // sub
+  const difficultCount = answers.filter(a => a.difficulty >= 3).length;
+  document.getElementById('res-name').textContent = studentName + '의 결과';
+  document.getElementById('res-sub').textContent = `5가지 딜레마 중 ${difficultCount}가지가 어렵게 느껴졌어요. 그만큼 여러 가치를 진지하게 고민한 거예요.`;
+
+  // summary
+  const summaryEl = document.getElementById('res-summary');
+  summaryEl.innerHTML = '';
+  DILEMMAS.forEach((d, i) => {
+    const ans = answers[i];
+    let choiceText = '선택 안 함';
+    if (ans.choice === 'a') choiceText = `A 선택 (${d.aVal})`;
+    else if (ans.choice === 'b') choiceText = `B 선택 (${d.bVal})`;
+    else if (ans.choice === 'c') choiceText = '선택 어려움';
+    const item = document.createElement('div');
+    item.className = 'ds-item';
+    item.innerHTML = `
+      <div class="ds-no">딜 ${i+1}</div>
+      <div class="ds-body">
+        <div class="ds-tag">${d.tag} · ${d.name}</div>
+        <div class="ds-choice">${choiceText}</div>
+        ${ans.reasonMain ? `<div class="ds-reason">${ans.reasonMain}</div>` : ''}
+      </div>`;
+    summaryEl.appendChild(item);
+  });
+
+  // reflect
+  document.getElementById('res-reflect').innerHTML =
+    `3차시에서 만난 롤모델과 나의 선택을 연결해봐요.<br>
+     내가 선택한 가치를 실천한 인물이 있었나요?<br>
+     4차시 가치관 마인드맵을 만들 때 오늘의 선택을 꼭 넣어보세요.`;
+
+  goPhase('ph-result');
+  document.getElementById('prog-fill').style.width = '100%';
+  document.getElementById('prog-pct').textContent = '100%';
+  document.getElementById('prog-text').textContent = '완료!';
+}
+
+function restart() {
+  cur = 0; answers = [];
+  document.getElementById('prog-fill').style.width = '0%';
+  document.getElementById('prog-pct').textContent = '0%';
+  document.getElementById('prog-text').textContent = '시작 전';
+  goPhase('ph-intro');
+}
+</script>
+</body>
+</html>
